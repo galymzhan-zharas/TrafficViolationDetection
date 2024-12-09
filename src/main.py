@@ -117,7 +117,43 @@ def main():
                     roi_x1, roi_y1, roi_x2, roi_y2 = crossed.xyxy[i].astype(int)
                     annotated_image[roi_y1:roi_y2, roi_x1:roi_x2] = annotated_roi
 
+                    ocr_result = ocr.ocr(plate_img)
+                    
+                    try: 
+                        if ocr_result and ocr_result[0] and ocr_result[0][0] and ocr_result[0][0][-1]:
+                            text = ocr_result[0][0][-1][0].upper()
+                        else:
+                            text = 'No text'
+                    except Exception: 
+                        print('Error with indexing')
 
+                    plate_img_resized = cv2.resize(plate_img, (200, 100))  
+                    annotated_image[0:100, 0:200] = plate_img_resized
+
+            
+                    # ocr_result = ocr.ocr(plate_img)
+                    # if not ocr_result or not ocr_result[0]: 
+                    #     text = 'No text detected'
+                    # else:
+                    #     ocr_result[0][0][-1][0].upper()
+
+                    text_position = (210, 50)  
+                    text_background_position = (200, 0, 400, 100) 
+
+                    cv2.rectangle(annotated_image, (text_background_position[0], text_background_position[1]),
+                                (text_background_position[2], text_background_position[3]), (255, 255, 255), -1)
+
+                    font_scale = 0.9 * (text_background_position[2] - text_background_position[0]) / cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)[0][0]
+                    text_thickness = 4
+
+                    textSize = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, font_scale, text_thickness)[0]
+                    textX = text_background_position[0] + (text_background_position[2] - text_background_position[0] - textSize[0]) / 2
+                    textY = text_background_position[1] + (text_background_position[3] - text_background_position[1] + textSize[1]) / 2
+
+                    cv2.putText(annotated_image, text, (int(textX), int(textY)), cv2.FONT_HERSHEY_SIMPLEX, font_scale, (0, 0, 255), text_thickness)
+                    #cv2.putText(annotated_image, text, (roi_x1, roi_y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 7)
+            line_color = (0,0,255)
+            text = 'traffic light: red'
         else: 
             annotated_image = notCrossedCars_annotator.annotate(
                                 scene=annotated_image, detections=detections)
