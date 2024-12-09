@@ -31,56 +31,71 @@ def main():
     line_color = (255,0,0)
     line_start = np.array(points[0])
     line_end = np.array(points[1])
-    dx, dy = line_end-line_start
-    # cv2.namedWindow('cars and buses')
-    # cv2.setMouseCallback('cars and buses', select_points)
-    # bounding_box_annotator = sv.BoundingBoxAnnotator()
-    # label_annotator = sv.LabelAnnotator()
-    crossedCars_annotator = sv.BoundingBoxAnnotator(color=sv.Color(255,0,0))
-    notCrossedCars_annotator = sv.BoundingBoxAnnotator(color=sv.Color(0,255,0))
-    plate_annotator = sv.BoundingBoxAnnotator(color=sv.Color(255,0,0))
-    is_red = True
-    while True: 
+    dx, dy = line_end - line_start
+
+    crossedCars_annotator = sv.BoxAnnotator(color=sv.Color(255, 0, 0))
+    notCrossedCars_annotator = sv.BoxAnnotator(color=sv.Color(0, 255, 0))
+    plate_annotator = sv.BoxAnnotator(color=sv.Color(255, 0, 0))
+
+
+
+    is_red = False
+    start = time.time()
+    text = ''
+    frame_no = 0
+    last = 0
+    while True:
         ret, frame = cap.read()
-        # pass the frame to the YOLO model 
-        if not ret: 
+        if not ret:
             break
+
+        # end = time.time()
+        # if (is_red) and (end - start >= 18.0) or (not is_red) and (end - start >= 2): 
+        #     is_red = not is_red
+        #     start = time.time()
+
+        # if frame_no - last <= 10: 
+        #     is_red = False
+
+        # elif frame_no - last > 10: 
+        #     if (frame_no-last)-1 == 10: 
+        #         last = frame_no-1
+        #     is_red = True
+
+        # elif frame_no - last == 100: 
+        #     last = frame_no
+
+        if frame_no < 200: 
+            is_red = False
+        else: 
+            is_red = True
         
-        results = yolov10_cars(frame, conf=0.5, classes=[2,5])[0] # {'car': 2, 'bus':5}
-        detections = sv.Detections.from_ultralytics(results)
+
         annotated_image = frame.copy()
+        if is_red: 
+            car_results = yolov10_cars(frame, conf=0.5, classes=[2, 3, 5,7 ])[0]
+            detections = sv.Detections.from_ultralytics(car_results)
+            annotated_image = frame.copy()
 
-        if is_red:
-            xywh = results.boxes.xywh.numpy()
-
-            half_height = np.zeros((xywh.shape[0],2))
-            half_height[:,1]=xywh[:,-1]/2
+            xywh = car_results.boxes.xywh.cpu().numpy()
+            half_height = np.zeros((xywh.shape[0], 2))
+            half_height[:, 1] = xywh[:, -1] / 2
             half_width = np.zeros((xywh.shape[0],2))
             half_width[:,1]=xywh[:,-2]/2
 
-            bottom_centers = xywh[:,:2] + half_height
+            bottom_centers = xywh[:, :2] + half_height
 
-  
-        # annotated_image = label_annotator.annotate(
-        #                     scene=annotated_image, detections=detections)
-        # if len(points)==2:
-        #     print(points[0], points[1])
-        #     cv2.line(frame, points[0], points[1], (255,0,0), 2)
-            num = dy*bottom_centers[:, 0] - dx*bottom_centers[:, 1] + line_end[0]*line_start[1] - line_end[1]*line_start[0]
+            num = dy * bottom_centers[:, 0] - dx * bottom_centers[:, 1] + line_end[0] * line_start[1] - line_end[1] * line_start[0]
             denom = np.sqrt(dy**2 + dx**2)
             dist = num/denom
 
             crossed = detections[dist<0]
             not_crossed = detections[dist>=0]
 
-            if len(crossed) > 0: 
-                annotated_image = crossedCars_annotator.annotate(
-                                scene=annotated_image, detections=crossed)
-            if len(not_crossed) > 0: 
-                annotated_image = notCrossedCars_annotator.annotate(
-                                scene=annotated_image, detections=not_crossed)    
-
-    
+            if len(crossed) > 0:
+                annotated_image = crossedCars_annotator.annotate(scene=annotated_image, detections=crossed)
+            if len(not_crossed) > 0:
+                annotated_image = notCrossedCars_annotator.annotate(scene=annotated_image, detections=not_crossed)
 
             roi = [frame[int(obj[1]):int(obj[3]), int(obj[0]):int(obj[2])] for obj in crossed.xyxy]
 
