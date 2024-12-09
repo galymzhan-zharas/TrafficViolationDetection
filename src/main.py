@@ -155,20 +155,21 @@ def main():
             line_color = (0,0,255)
             text = 'traffic light: red'
         else: 
-            annotated_image = notCrossedCars_annotator.annotate(
-                                scene=annotated_image, detections=detections)
-        
-        cv2.line(annotated_image, line_start, line_end, (255,0,0), 2)
-        
+            line_color = (255, 0, 0)
+            text = 'traffic light: green'
+        cv2.line(annotated_image, tuple(line_start), tuple(line_end), line_color, 2)
+        cv2.putText(annotated_image, text, (frame.shape[1]-500, 50), cv2.FONT_HERSHEY_COMPLEX, 1.2, color=line_color, thickness=5)
         cv2.imshow('Cars and buses', annotated_image)
-        # cv2.imshow('cars and buses', frame)
-        if cv2.waitKey(1)==ord('q'): 
+
+        if cv2.waitKey(1) == ord('q'):
             break
 
+        frame_no+=1
+    print(i)
+    end = time.time()
+    print('time: ',end - start)
     cap.release()
     cv2.destroyAllWindows()
 
-if __name__ == "__main__":
-    # detect()
+if __name__ == '__main__':
     main()
-    # pass
