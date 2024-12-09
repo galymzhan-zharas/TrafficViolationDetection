@@ -1,26 +1,18 @@
 import cv2
+import numpy as np
 from ultralytics import YOLO
 import supervision as sv
-import numpy as np
-# points = []
-def select_points(event, x, y, flags, param):
-    global points
-    if event == cv2.EVENT_LBUTTONDOWN:
-        points.append((x, y))
-        if len(points) == 2:  # Once two points are selected, disable further selection
-            cv2.setMouseCallback('Frame', lambda *args : None)
+from paddleocr import PaddleOCR
+import time
 
-def detect():
-    yolov10_plate = YOLO('yolov10b-plate.pt')
-    img = cv2.imread('BUS.png')
-    res = yolov10_plate(img, conf=0.5)[0]
-    detections = sv.Detections.from_ultralytics(res)
-    img = sv.BoundingBoxAnnotator().annotate(
-        scene = img, detections=detections
-    )
-    cv2.imshow('img', img)
-    if cv2.waitKey(1)==ord('q'):
-        cv2.destroyAllWindows()
+
+def add_text_with_background(image, text, position, font, font_scale, font_color, thickness, background_color):
+    text_size = cv2.getTextSize(text, font, font_scale, thickness)[0]
+    text_width, text_height = text_size
+    box_coords = ((position[0], position[1] + 10), (position[0] + text_width, position[1] - text_height - 10))
+    cv2.rectangle(image, box_coords[0], box_coords[1], background_color, cv2.FILLED)
+    cv2.putText(image, text, position, font, font_scale, font_color, thickness)
+
 
 
 def main():
