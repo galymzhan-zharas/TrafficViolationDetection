@@ -100,10 +100,18 @@ def main():
             roi = [frame[int(obj[1]):int(obj[3]), int(obj[0]):int(obj[2])] for obj in crossed.xyxy]
 
             for i, roi_img in enumerate(roi):
-                plate_result = yolov10_plate(roi_img)
+                plate_results = yolov10_plate(roi_img)[0]
 
-                if plate_result:
-                    plate_detections = sv.Detections.from_ultralytics(plate_result[0]) 
+                if plate_results:
+                    x1 = int(plate_results.boxes.xyxy[0][0])
+                    y1 = int(plate_results.boxes.xyxy[0][1])
+                    x2 = int(plate_results.boxes.xyxy[0][2])
+                    y2 = int(plate_results.boxes.xyxy[0][3])
+                    print(x1,y1,x2,y2)
+                    #detections = plate_results.xyxy[0]  
+                        #x1, y1, x2, y2, conf, cls = plate_det[:6].int().tolist()
+                    plate_img = roi_img[y1:y2, x1:x2]
+                    plate_detections = sv.Detections.from_ultralytics(plate_results)
                     annotated_roi = plate_annotator.annotate(scene=roi_img, detections=plate_detections)
 
                     roi_x1, roi_y1, roi_x2, roi_y2 = crossed.xyxy[i].astype(int)
