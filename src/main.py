@@ -16,13 +16,19 @@ def add_text_with_background(image, text, position, font, font_scale, font_color
 
 
 def main():
-    yolov10_cars = YOLO('yolov10n.pt') # initialize model
-    yolov10_plate = YOLO('yolov10b-plate.pt')
+    
+    cv2.namedWindow('Cars and buses', cv2.WINDOW_NORMAL)
+    cv2.resizeWindow('Cars and buses', 500, 800)
 
-    video_path = 'data/vehicles_pass.MOV'
+    yolov10_cars = YOLO('yolov10n.pt').to("cuda")
+    yolov10_plate = YOLO('yolob8m.pt').to("cuda")
+    ocr = PaddleOCR(use_angle_cls=True, lang='en', res_algorithm="CRNN", show_log=False, det_algorithm="DB")
+
+    video_path = 'vehicles_pass2.MOV'
     cap = cv2.VideoCapture(video_path)
 
-    points = [[6, 1263], [1072, 1176]]
+    points = [[8, 1234], [717,1190]]
+    line_color = (255,0,0)
     line_start = np.array(points[0])
     line_end = np.array(points[1])
     dx, dy = line_end-line_start
